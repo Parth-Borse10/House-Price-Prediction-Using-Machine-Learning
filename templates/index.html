@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>House Price Prediction</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 40px;
+        }
+
+        .header h1 {
+            font-size: 3rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .header p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+
+        .card {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #555;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 8px;
+            font-size: 18px;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            margin: 10px 5px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, #f093fb, #f5576c);
+        }
+
+        .result {
+            text-align: center;
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 20px;
+            display: none;
+        }
+
+        .result.success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+
+        .result.error {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+
+        .price {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: #28a745;
+            margin: 10px 0;
+        }
+
+        .metrics {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .metric-card {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .metric-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .button-group {
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        .feature-importance {
+            margin-top: 20px;
+        }
+
+        .importance-bar {
+            background: #e9ecef;
+            border-radius: 10px;
+            margin: 5px 0;
+            overflow: hidden;
+        }
+
+        .importance-fill {
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            height: 25px;
+            border-radius: 10px;
+            transition: width 0.5s;
+            color: white;
+            text-align: right;
+            padding-right: 10px;
+            line-height: 25px;
+            font-size: 12px;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .btn {
+                width: 100%;
+                margin: 5px 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🏠 House Price Predictor</h1>
+            <p>Predict house prices using machine learning</p>
+        </div>
+
+        <div class="card">
+            <h2>Model Training</h2>
+            <p>Train the machine learning model with sample data first:</p>
+            <div class="button-group">
+                <button class="btn" onclick="trainModel()">Train Model</button>
+            </div>
+            <div id="trainingResult" class="result"></div>
+            <div id="trainingMetrics" style="display: none;">
+                <h3>Model Performance</h3>
+                <div class="metrics" id="metricsContainer"></div>
+                <div class="feature-importance">
+                    <h3>Feature Importance</h3>
+                    <div id="importanceChart"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>Predict House Price</h2>
+            <p>Enter the house features to get a price prediction:</p>
+            
+            <div class="form-grid">
+                <div class="form-group">
+                    <label for="bedrooms">Bedrooms</label>
+                    <input type="number" id="bedrooms" min="1" max="10" value="3">
+                </div>
+                
+                <div class="form-group">
+                    <label for="bathrooms">Bathrooms</label>
+                    <input type="number" id="bathrooms" min="1" max="10" step="0.5" value="2">
+                </div>
+                
+                <div class="form-group">
+                    <label for="sqft_living">Living Area (sqft)</label>
+                    <input type="number" id="sqft_living" min="500" value="2000">
+                </div>
+                
+                <div class="form-group">
+                    <label for="sqft_lot">Lot Area (sqft)</label>
+                    <input type="number" id="sqft_lot" min="1000" value="5000">
+                </div>
+                
+                <div class="form-group">
+                    <label for="floors">Floors</label>
+                    <select id="floors">
+                        <option value="1">1</option>
+                        <option value="1.5">1.5</option>
+                        <option value="2" selected>2</option>
+                        <option value="2.5">2.5</option>
+                        <option value="3">3</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="waterfront">Waterfront</label>
+                    <select id="waterfront">
+                        <option value="0">No</option>
+                        <option value="1">Yes</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="view">View Quality (0-4)</label>
+                    <input type="number" id="view" min="0" max="4" value="0">
+                </div>
+                
+                <div class="form-group">
+                    <label for="condition">Condition (1-5)</label>
+                    <input type="number" id="condition" min="1" max="5" value="3">
+                </div>
+                
+                <div class="form-group">
+                    <label for="grade">Construction Grade (1-13)</label>
+                    <input type="number" id="grade" min="1" max="13" value="7">
+                </div>
+                
+                <div class="form-group">
+                    <label for="sqft_above">Above Ground (sqft)</label>
+                    <input type="number" id="sqft_above" min="500" value="1500">
+                </div>
+                
+                <div class="form-group">
+                    <label for="sqft_basement">Basement (sqft)</label>
+                    <input type="number" id="sqft_basement" min="0" value="500">
+                </div>
+                
+                <div class="form-group">
+                    <label for="yr_built">Year Built</label>
+                    <input type="number" id="yr_built" min="1900" max="2023" value="1990">
+                </div>
+                
+                <div class="form-group">
+                    <label for="yr_renovated">Year Renovated (0 if none)</label>
+                    <input type="number" id="yr_renovated" min="0" max="2023" value="0">
+                </div>
+                
+                <div class="form-group">
+                    <label for="zipcode">Zipcode</label>
+                    <input type="number" id="zipcode" value="98001">
+                </div>
+                
+                <div class="form-group">
+                    <label for="lat">Latitude</label>
+                    <input type="number" id="lat" step="0.0001" value="47.5">
+                </div>
+                
+                <div class="form-group">
+                    <label for="long">Longitude</label>
+                    <input type="number" id="long" step="0.0001" value="-122.2">
+                </div>
+            </div>
+            
+            <div class="button-group">
+                <button class="btn" onclick="predictPrice()">Predict Price</button>
+                <button class="btn btn-secondary" onclick="resetForm()">Reset Form</button>
+            </div>
+            
+            <div class="loading" id="predictionLoading">
+                <div class="spinner"></div>
+                <p>Calculating prediction...</p>
+            </div>
+            
+            <div id="predictionResult" class="result"></div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:5000/api';
+        
+        async function trainModel() {
+            const resultDiv = document.getElementById('trainingResult');
+            const metricsDiv = document.getElementById('trainingMetrics');
+            
+            resultDiv.style.display = 'none';
+            metricsDiv.style.display = 'none';
+            
+            try {
+                const response = await fetch(`${API_BASE}/train`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                const data = await response.json();
+                
+                resultDiv.className = 'result ' + (data.success ? 'success' : 'error');
+                resultDiv.innerHTML = `<strong>${data.success ? 'Success!' : 'Error!'}</strong> ${data.message}`;
+                resultDiv.style.display = 'block';
+                
+                if (data.success && data.metrics) {
+                    displayMetrics(data.metrics);
+                    metricsDiv.style.display = 'block';
+                }
+                
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.innerHTML = `<strong>Error!</strong> Failed to train model: ${error.message}`;
+                resultDiv.style.display = 'block';
+            }
+        }
+        
+        function displayMetrics(metrics) {
+            // Display basic metrics
+            const metricsContainer = document.getElementById('metricsContainer');
+            metricsContainer.innerHTML = `
+                <div class="metric-card">
+                    <div class="metric-value">$${Math.round(metrics.mae).toLocaleString()}</div>
+                    <div>Mean Absolute Error</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">${metrics.r2.toFixed(3)}</div>
+                    <div>R² Score</div>
+                </div>
+            `;
+            
+            // Display feature importance
+            const importanceChart = document.getElementById('importanceChart');
+            let importanceHTML = '';
+            
+            // Sort features by importance
+            const sortedFeatures = Object.entries(metrics.feature_importance)
+                .sort((a, b) => b[1] - a[1]);
+            
+            sortedFeatures.forEach(([feature, importance]) => {
+                const percentage = (importance * 100).toFixed(1);
+                importanceHTML += `
+                    <div class="importance-bar">
+                        <div class="importance-fill" style="width: ${percentage}%">
+                            ${feature}: ${percentage}%
+                        </div>
+                    </div>
+                `;
+            });
+            
+            importanceChart.innerHTML = importanceHTML;
+        }
+        
+        async function predictPrice() {
+            const loadingDiv = document.getElementById('predictionLoading');
+            const resultDiv = document.getElementById('predictionResult');
+            
+            loadingDiv.style.display = 'block';
+            resultDiv.style.display = 'none';
+            
+            try {
+                // Collect all feature values
+                const features = {};
+                const featureIds = [
+                    'bedrooms', 'bathrooms', 'sqft_living', 'sqft_lot', 'floors',
+                    'waterfront', 'view', 'condition', 'grade', 'sqft_above',
+                    'sqft_basement', 'yr_built', 'yr_renovated', 'zipcode', 'lat', 'long'
+                ];
+                
+                featureIds.forEach(id => {
+                    const element = document.getElementById(id);
+                    features[id] = parseFloat(element.value);
+                });
+                
+                const response = await fetch(`${API_BASE}/predict`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(features)
+                });
+                
+                const data = await response.json();
+                
+                loadingDiv.style.display = 'none';
+                
+                resultDiv.className = 'result ' + (data.success ? 'success' : 'error');
+                
+                if (data.success) {
+                    resultDiv.innerHTML = `
+                        <h3>Predicted House Price</h3>
+                        <div class="price">$${data.predicted_price.toLocaleString()}</div>
+                        <p>Based on the provided features</p>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `<strong>Error!</strong> ${data.message}`;
+                }
+                
+                resultDiv.style.display = 'block';
+                
+            } catch (error) {
+                loadingDiv.style.display = 'none';
+                resultDiv.className = 'result error';
+                resultDiv.innerHTML = `<strong>Error!</strong> Failed to get prediction: ${error.message}`;
+                resultDiv.style.display = 'block';
+            }
+        }
+        
+        function resetForm() {
+            // Reset all form fields to their default values
+            document.getElementById('bedrooms').value = '3';
+            document.getElementById('bathrooms').value = '2';
+            document.getElementById('sqft_living').value = '2000';
+            document.getElementById('sqft_lot').value = '5000';
+            document.getElementById('floors').value = '2';
+            document.getElementById('waterfront').value = '0';
+            document.getElementById('view').value = '0';
+            document.getElementById('condition').value = '3';
+            document.getElementById('grade').value = '7';
+            document.getElementById('sqft_above').value = '1500';
+            document.getElementById('sqft_basement').value = '500';
+            document.getElementById('yr_built').value = '1990';
+            document.getElementById('yr_renovated').value = '0';
+            document.getElementById('zipcode').value = '98001';
+            document.getElementById('lat').value = '47.5';
+            document.getElementById('long').value = '-122.2';
+            
+            document.getElementById('predictionResult').style.display = 'none';
+        }
+        
+        // Initialize the application
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('House Price Prediction App Loaded');
+        });
+    </script>
+</body>
+</html>
